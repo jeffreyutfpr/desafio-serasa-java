@@ -107,6 +107,7 @@ class PessoaControllerTest {
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/pessoas")
+                        .header("Authorization", "Bearer " + tokenUser) // agora precisa de token
                         .param("nome", "Carlos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].nome").value("Carlos"));
@@ -168,6 +169,7 @@ class PessoaControllerTest {
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/pessoas")
+                        .header("Authorization", "Bearer " + tokenAdmin) // agora precisa de token
                         .param("nome", "Pedro"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isEmpty());
@@ -243,4 +245,86 @@ class PessoaControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Recurso não encontrado"));
     }
+
+    @Test
+    void naoDevePermitirAtualizarComUsuarioUser() throws Exception {
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Teste User")
+                .idade(28)
+                .cep("01001000")
+                .score(400)
+                .build();
+
+        // cria com admin
+        String response = mockMvc.perform(post("/pessoas")
+                        .header("Authorization", "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long id = objectMapper.readTree(response).get("id").asLong();
+
+        // tenta atualizar com user
+        PessoaRequestDto updateReq = PessoaRequestDto.builder()
+                .nome("User Alterado")
+                .idade(29)
+                .cep("01001000")
+                .score(500)
+                .build();
+
+        mockMvc.perform(put("/pessoas/" + id)
+                        .header("Authorization", "Bearer " + tokenUser)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void naoDevePermitirExcluirComUsuarioUser() throws Exception {
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Teste Exclusao")
+                .idade(35)
+                .cep("01001000")
+                .score(500)
+                .build();
+
+        // cria com admin
+        String response = mockMvc.perform(post("/pessoas")
+                        .header("Authorization", "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long id = objectMapper.readTree(response).get("id").asLong();
+
+        // tenta excluir com user
+        mockMvc.perform(delete("/pessoas/" + id)
+                        .header("Authorization", "Bearer " + tokenUser))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void devePermitirListarComUsuarioAdmin() throws Exception {
+        mockMvc.perform(get("/pessoas")
+                        .header("Authorization", "Bearer " + tokenAdmin))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void naoDevePermitirAcessoSemToken() throws Exception {
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Sem Token")
+                .idade(22)
+                .cep("01001000")
+                .score(300)
+                .build();
+
+        mockMvc.perform(post("/pessoas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isUnauthorized());
+    }
+
 }
