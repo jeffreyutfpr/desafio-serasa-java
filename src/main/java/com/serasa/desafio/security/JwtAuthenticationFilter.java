@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.NonNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,7 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
@@ -46,8 +47,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             String role = jwtUtil.extractRole(token); // pega "ADMIN" ou "USER"
             UserDetails userDetails = User.withUsername(username)
-                    .password("N/A")
-                    .roles(role) // Spring vai transformar em ROLE_ADMIN/ROLE_USER
+                    .password("")
+                    .roles(role)
                     .build();
 
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(

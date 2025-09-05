@@ -13,7 +13,7 @@
   <artifactId>desafio-serasa</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>desafio-serasa</name>
-  <description>Avaliação - Desenvolvedor Java Pleno</description>
+  <description>Desafio Serasa Experian - Java</description>
 
   <properties>
     <java.version>17</java.version>

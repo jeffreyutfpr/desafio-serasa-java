@@ -1,7 +1,11 @@
 package com.serasa.desafio.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "pessoas")
 public class Pessoa {
@@ -21,41 +25,9 @@ public class Pessoa {
     private Integer score;
     private boolean ativo = true;
 
-    public Pessoa() {}
-
-    // Getters and setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public String getNome() { return nome; }
-    public void setNome(String nome) { this.nome = nome; }
-
-    public Integer getIdade() { return idade; }
-    public void setIdade(Integer idade) { this.idade = idade; }
-
-    public String getCep() { return cep; }
-    public void setCep(String cep) { this.cep = cep; }
-
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
-
-    public String getCidade() { return cidade; }
-    public void setCidade(String cidade) { this.cidade = cidade; }
-
-    public String getBairro() { return bairro; }
-    public void setBairro(String bairro) { this.bairro = bairro; }
-
-    public String getLogradouro() { return logradouro; }
-    public void setLogradouro(String logradouro) { this.logradouro = logradouro; }
-
-    public String getTelefone() { return telefone; }
-    public void setTelefone(String telefone) { this.telefone = telefone; }
-
-    public Integer getScore() { return score; }
-    public void setScore(Integer score) { this.score = score; }
-
-    public boolean isAtivo() { return ativo; }
-    public void setAtivo(boolean ativo) { this.ativo = ativo; }
+    public Pessoa() {
+        // Construtor vazio necessário para o JPA/Hibernate instanciar a entidade.
+    }
 
     @Transient
     public String getScoreDescricao() {

@@ -1,7 +1,10 @@
 package com.serasa.desafio.controller;
 
 import com.serasa.desafio.security.JwtUtil;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,7 +27,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest req) {
+    public ResponseEntity<Map<String, String>> login(@Valid @RequestBody LoginRequest req) {
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword()));
         String role = auth.getAuthorities().stream().map(GrantedAuthority::getAuthority).findFirst().orElse("ROLE_USER");
@@ -32,15 +35,13 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("token", token));
     }
 
+    @Setter
+    @Getter
     public static class LoginRequest {
         @NotBlank
         private String username;
         @NotBlank
         private String password;
 
-        public String getUsername() { return username; }
-        public void setUsername(String username) { this.username = username; }
-        public String getPassword() { return password; }
-        public void setPassword(String password) { this.password = password; }
     }
 }

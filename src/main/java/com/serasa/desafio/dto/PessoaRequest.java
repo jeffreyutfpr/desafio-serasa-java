@@ -1,38 +1,31 @@
 package com.serasa.desafio.dto;
 
 import jakarta.validation.constraints.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 public class PessoaRequest {
 
-    @NotBlank
+    @NotBlank(message = "Nome é obrigatório")
     private String nome;
 
-    @NotNull
-    @Min(0)
+    @NotNull(message = "Idade é obrigatória")
+    @Min(value = 0, message = "Idade deve ser maior ou igual a 0")
+    @Max(value = 120, message = "Idade deve ser menor ou igual a 120")
     private Integer idade;
 
-    @NotBlank
+    @NotBlank(message = "CEP é obrigatório")
+    @Pattern(regexp = "^\\d{8}$", message = "CEP deve ter exatamente 8 dígitos")
     private String cep;
 
+    @Pattern(regexp = "^\\d{10,11}$", message = "Telefone deve ter 10 ou 11 dígitos")
     private String telefone;
 
-    @NotNull
-    @Min(0)
-    @Max(1000)
+    @NotNull(message = "Score é obrigatório")
+    @Min(value = 0, message = "Score deve ser no mínimo 0")
+    @Max(value = 1000, message = "Score deve ser no máximo 1000")
     private Integer score;
 
-    public String getNome() { return nome; }
-    public void setNome(String nome) { this.nome = nome; }
-
-    public Integer getIdade() { return idade; }
-    public void setIdade(Integer idade) { this.idade = idade; }
-
-    public String getCep() { return cep; }
-    public void setCep(String cep) { this.cep = cep; }
-
-    public String getTelefone() { return telefone; }
-    public void setTelefone(String telefone) { this.telefone = telefone; }
-
-    public Integer getScore() { return score; }
-    public void setScore(Integer score) { this.score = score; }
 }

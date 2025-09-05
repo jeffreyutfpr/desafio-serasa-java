@@ -14,6 +14,7 @@ public class CepClient {
         this.restTemplate = restTemplate;
     }
 
+    @SuppressWarnings("unchecked")
     public Map<String, Object> buscaEndereco(String cep) {
         String url = "https://viacep.com.br/ws/" + cep + "/json/";
         return restTemplate.getForObject(url, Map.class);

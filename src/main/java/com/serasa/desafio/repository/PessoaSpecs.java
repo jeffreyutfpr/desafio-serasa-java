@@ -5,6 +5,10 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class PessoaSpecs {
 
+    private PessoaSpecs() {
+        // Impede a instanciação da classe utilitária.
+    }
+
     public static Specification<Pessoa> ativoTrue() {
         return (root, query, cb) -> cb.isTrue(root.get("ativo"));
     }
