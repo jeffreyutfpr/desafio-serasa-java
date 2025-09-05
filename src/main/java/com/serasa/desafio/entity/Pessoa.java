@@ -1,12 +1,13 @@
 package com.serasa.desafio.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Setter
-@Getter
 @Entity
+@Getter
+@Setter
+@AllArgsConstructor
+@EqualsAndHashCode(of = "id")
 @Table(name = "pessoas")
 public class Pessoa {
 

@@ -1,4 +1,4 @@
-package com.serasa.desafio;
+package com.serasa.desafio.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.serasa.desafio.dto.PessoaRequestDto;
@@ -107,7 +107,7 @@ class PessoaControllerTest {
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/pessoas")
-                        .header("Authorization", "Bearer " + tokenUser) // agora precisa de token
+                        .header("Authorization", "Bearer " + tokenUser)
                         .param("nome", "Carlos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].nome").value("Carlos"));
@@ -169,7 +169,7 @@ class PessoaControllerTest {
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/pessoas")
-                        .header("Authorization", "Bearer " + tokenAdmin) // agora precisa de token
+                        .header("Authorization", "Bearer " + tokenAdmin)
                         .param("nome", "Pedro"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isEmpty());
@@ -197,7 +197,7 @@ class PessoaControllerTest {
     void naoDeveCriarPessoaComIdadeInvalida() throws Exception {
         PessoaRequestDto req = PessoaRequestDto.builder()
                 .nome("Teste")
-                .idade(200) // inválido
+                .idade(200)
                 .cep("01001000")
                 .telefone("1199999999")
                 .score(500)
@@ -216,7 +216,7 @@ class PessoaControllerTest {
         PessoaRequestDto req = PessoaRequestDto.builder()
                 .nome("Maria")
                 .idade(30)
-                .cep("123") // inválido
+                .cep("123")
                 .telefone("1199999999")
                 .score(500)
                 .build();
@@ -255,7 +255,6 @@ class PessoaControllerTest {
                 .score(400)
                 .build();
 
-        // cria com admin
         String response = mockMvc.perform(post("/pessoas")
                         .header("Authorization", "Bearer " + tokenAdmin)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -265,7 +264,6 @@ class PessoaControllerTest {
 
         Long id = objectMapper.readTree(response).get("id").asLong();
 
-        // tenta atualizar com user
         PessoaRequestDto updateReq = PessoaRequestDto.builder()
                 .nome("User Alterado")
                 .idade(29)
@@ -289,7 +287,6 @@ class PessoaControllerTest {
                 .score(500)
                 .build();
 
-        // cria com admin
         String response = mockMvc.perform(post("/pessoas")
                         .header("Authorization", "Bearer " + tokenAdmin)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -299,7 +296,6 @@ class PessoaControllerTest {
 
         Long id = objectMapper.readTree(response).get("id").asLong();
 
-        // tenta excluir com user
         mockMvc.perform(delete("/pessoas/" + id)
                         .header("Authorization", "Bearer " + tokenUser))
                 .andExpect(status().isForbidden());
