@@ -22,7 +22,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleNotFound(NoSuchElementException ex) {
         Map<String, Object> body = new HashMap<>();
         body.put(ERROR, "Recurso não encontrado");
-        body.put(DETAILS, ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
