@@ -1,12 +1,12 @@
 package com.serasa.desafio.service.impl;
 
+import com.serasa.desafio.client.CepClient;
 import com.serasa.desafio.dto.PessoaRequestDto;
 import com.serasa.desafio.dto.PessoaResponseDto;
 import com.serasa.desafio.entity.Pessoa;
 import com.serasa.desafio.repository.PessoaRepository;
 import com.serasa.desafio.repository.PessoaSpecs;
 import com.serasa.desafio.service.PessoaService;
-import com.serasa.desafio.client.CepClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -19,6 +19,8 @@ import java.util.NoSuchElementException;
 @Service
 public class PessoaServiceImpl implements PessoaService {
 
+    private static final String PESSOA_NAO_ENCONTRADA = "Pessoa não encontrada";
+
     private final PessoaRepository repository;
     private final CepClient cepClient;
 
@@ -30,17 +32,11 @@ public class PessoaServiceImpl implements PessoaService {
     @Override
     @Transactional
     public PessoaResponseDto criar(PessoaRequestDto req) {
-        Pessoa p = new Pessoa();
-        p.setNome(req.getNome());
-        p.setIdade(req.getIdade());
-        p.setCep(req.getCep());
-        p.setTelefone(req.getTelefone());
-        p.setScore(req.getScore());
-
-        preencherEnderecoPorCep(p, req.getCep());
-
-        p = repository.save(p);
-        return toResponse(p);
+        Pessoa pessoa = toEntity(req);
+        preencherEnderecoPorCep(pessoa, req.getCep());
+        pessoa.setAtivo(true);
+        pessoa = repository.save(pessoa);
+        return toResponse(pessoa);
     }
 
     @Override
@@ -56,36 +52,70 @@ public class PessoaServiceImpl implements PessoaService {
     @Override
     @Transactional
     public PessoaResponseDto atualizar(Long id, PessoaRequestDto req) {
-        Pessoa p = repository.findById(id).orElseThrow(() -> new NoSuchElementException("Pessoa não encontrada"));
-        if (req.getNome() != null) p.setNome(req.getNome());
-        if (req.getIdade() != null) p.setIdade(req.getIdade());
-        if (req.getTelefone() != null) p.setTelefone(req.getTelefone());
-        if (req.getScore() != null) p.setScore(req.getScore());
-        if (req.getCep() != null && !req.getCep().equals(p.getCep())) {
-            p.setCep(req.getCep());
-            preencherEnderecoPorCep(p, req.getCep());
+        Pessoa pessoa = repository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException(PESSOA_NAO_ENCONTRADA));
+
+        if (req.getNome() != null) pessoa.setNome(req.getNome());
+        if (req.getIdade() != null) pessoa.setIdade(req.getIdade());
+        if (req.getTelefone() != null) pessoa.setTelefone(req.getTelefone());
+        if (req.getScore() != null) pessoa.setScore(req.getScore());
+        if (req.getCep() != null && !req.getCep().equals(pessoa.getCep())) {
+            pessoa.setCep(req.getCep());
+            preencherEnderecoPorCep(pessoa, req.getCep());
         }
-        p = repository.save(p);
-        return toResponse(p);
+
+        pessoa = repository.save(pessoa);
+        return toResponse(pessoa);
     }
 
     @Override
     @Transactional
     public void excluirLogicamente(Long id) {
-        Pessoa p = repository.findById(id).orElseThrow(() -> new NoSuchElementException("Pessoa não encontrada"));
-        p.setAtivo(false);
-        repository.save(p);
+        Pessoa pessoa = repository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException(PESSOA_NAO_ENCONTRADA));
+        pessoa.setAtivo(false);
+        repository.save(pessoa);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PessoaResponseDto buscarPorId(Long id) {
-        Pessoa p = repository.findById(id).orElseThrow(() -> new NoSuchElementException("Pessoa não encontrada"));
-        return toResponse(p);
+        Pessoa pessoa = repository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException(PESSOA_NAO_ENCONTRADA));
+        return toResponse(pessoa);
+    }
+
+    private Pessoa toEntity(PessoaRequestDto req) {
+        Pessoa p = new Pessoa();
+        p.setNome(req.getNome());
+        p.setIdade(req.getIdade());
+        p.setCep(req.getCep());
+        p.setTelefone(req.getTelefone());
+        p.setScore(req.getScore());
+        p.setAtivo(true);
+        return p;
+    }
+
+    private PessoaResponseDto toResponse(Pessoa p) {
+        return PessoaResponseDto.builder()
+                .id(p.getId())
+                .nome(p.getNome())
+                .idade(p.getIdade())
+                .cep(p.getCep())
+                .estado(p.getEstado())
+                .cidade(p.getCidade())
+                .bairro(p.getBairro())
+                .logradouro(p.getLogradouro())
+                .telefone(p.getTelefone())
+                .score(p.getScore())
+                .scoreDescricao(calcularScoreDescricao(p.getScore()))
+                .build();
     }
 
     private void preencherEnderecoPorCep(Pessoa p, String cep) {
         Map<String, Object> endereco = cepClient.buscaEndereco(cep);
-        if (endereco != null && endereco.get("erro") == null) {
+
+        if (!endereco.isEmpty() && endereco.get("erro") == null) {
             p.setEstado((String) endereco.getOrDefault("uf", null));
             p.setCidade((String) endereco.getOrDefault("localidade", null));
             p.setBairro((String) endereco.getOrDefault("bairro", null));
@@ -93,19 +123,11 @@ public class PessoaServiceImpl implements PessoaService {
         }
     }
 
-    private PessoaResponseDto toResponse(Pessoa p) {
-        PessoaResponseDto r = new PessoaResponseDto();
-        r.setId(p.getId());
-        r.setNome(p.getNome());
-        r.setIdade(p.getIdade());
-        r.setCep(p.getCep());
-        r.setEstado(p.getEstado());
-        r.setCidade(p.getCidade());
-        r.setBairro(p.getBairro());
-        r.setLogradouro(p.getLogradouro());
-        r.setTelefone(p.getTelefone());
-        r.setScore(p.getScore());
-        r.setScoreDescricao(p.getScoreDescricao());
-        return r;
+    private String calcularScoreDescricao(Integer score) {
+        if (score == null) return null;
+        if (score <= 200) return "Baixo";
+        if (score <= 500) return "Inaceitável";
+        if (score <= 700) return "Aceitável";
+        return "Recomendável";
     }
 }
