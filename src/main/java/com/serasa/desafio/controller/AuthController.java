@@ -1,6 +1,6 @@
 package com.serasa.desafio.controller;
 
-import com.serasa.desafio.security.JwtUtil;
+import com.serasa.desafio.security.jwt.JwtUtil;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

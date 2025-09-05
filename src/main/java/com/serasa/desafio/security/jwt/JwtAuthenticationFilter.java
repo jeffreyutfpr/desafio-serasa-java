@@ -1,4 +1,4 @@
-package com.serasa.desafio.security;
+package com.serasa.desafio.security.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -45,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            String role = jwtUtil.extractRole(token); // pega "ADMIN" ou "USER"
+            String role = jwtUtil.extractRole(token);
             UserDetails userDetails = User.withUsername(username)
                     .password("")
                     .roles(role)

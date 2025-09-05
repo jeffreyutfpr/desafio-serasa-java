@@ -1,6 +1,6 @@
 package com.serasa.desafio.config;
 
-import com.serasa.desafio.security.JwtAuthenticationFilter;
+import com.serasa.desafio.security.jwt.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -36,6 +36,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/h2-console/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/pessoas/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/pessoas/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/pessoas/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/pessoas/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .headers(h -> h.frameOptions(f -> f.disable())) // enable H2 console frames

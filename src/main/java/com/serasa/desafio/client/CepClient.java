@@ -1,4 +1,4 @@
-package com.serasa.desafio.util;
+package com.serasa.desafio.client;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;

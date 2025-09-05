@@ -1,7 +1,7 @@
 package com.serasa.desafio;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.serasa.desafio.dto.PessoaRequest;
+import com.serasa.desafio.dto.PessoaRequestDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,12 +56,13 @@ class PessoaControllerTest {
 
     @Test
     void deveCriarPessoaComSucesso() throws Exception {
-        PessoaRequest req = new PessoaRequest();
-        req.setNome("João da Silva");
-        req.setIdade(25);
-        req.setCep("01001000");
-        req.setTelefone("11999999999");
-        req.setScore(800);
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("João da Silva")
+                .idade(25)
+                .cep("01001000")
+                .telefone("11999999999")
+                .score(800)
+                .build();
 
         mockMvc.perform(post("/pessoas")
                         .header("Authorization", "Bearer " + tokenAdmin)
@@ -75,11 +76,12 @@ class PessoaControllerTest {
 
     @Test
     void naoDevePermitirCriacaoComUsuarioUser() throws Exception {
-        PessoaRequest req = new PessoaRequest();
-        req.setNome("Maria");
-        req.setIdade(30);
-        req.setCep("01001000");
-        req.setScore(600);
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Maria")
+                .idade(30)
+                .cep("01001000")
+                .score(600)
+                .build();
 
         mockMvc.perform(post("/pessoas")
                         .header("Authorization", "Bearer " + tokenUser)
@@ -90,12 +92,13 @@ class PessoaControllerTest {
 
     @Test
     void deveListarPessoasComFiltroPorNome() throws Exception {
-        PessoaRequest req = new PessoaRequest();
-        req.setNome("Carlos");
-        req.setIdade(40);
-        req.setCep("01001000");
-        req.setTelefone("11988887777");
-        req.setScore(600);
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Carlos")
+                .idade(40)
+                .cep("01001000")
+                .telefone("11988887777")
+                .score(600)
+                .build();
 
         mockMvc.perform(post("/pessoas")
                         .header("Authorization", "Bearer " + tokenAdmin)
@@ -111,11 +114,12 @@ class PessoaControllerTest {
 
     @Test
     void deveAtualizarPessoaComSucesso() throws Exception {
-        PessoaRequest req = new PessoaRequest();
-        req.setNome("Ana");
-        req.setIdade(22);
-        req.setCep("01001000");
-        req.setScore(500);
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Ana")
+                .idade(22)
+                .cep("01001000")
+                .score(500)
+                .build();
 
         String response = mockMvc.perform(post("/pessoas")
                         .header("Authorization", "Bearer " + tokenAdmin)
@@ -125,11 +129,12 @@ class PessoaControllerTest {
 
         Long id = objectMapper.readTree(response).get("id").asLong();
 
-        PessoaRequest updateReq = new PessoaRequest();
-        updateReq.setNome("Ana Maria");
-        updateReq.setIdade(23);
-        updateReq.setCep("01001000");
-        updateReq.setScore(700);
+        PessoaRequestDto updateReq = PessoaRequestDto.builder()
+                .nome("Ana Maria")
+                .idade(23)
+                .cep("01001000")
+                .score(700)
+                .build();
 
         mockMvc.perform(put("/pessoas/" + id)
                         .header("Authorization", "Bearer " + tokenAdmin)
@@ -143,11 +148,12 @@ class PessoaControllerTest {
 
     @Test
     void deveExcluirPessoaLogicamente() throws Exception {
-        PessoaRequest req = new PessoaRequest();
-        req.setNome("Pedro");
-        req.setIdade(33);
-        req.setCep("01001000");
-        req.setScore(300);
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Pedro")
+                .idade(33)
+                .cep("01001000")
+                .score(300)
+                .build();
 
         String response = mockMvc.perform(post("/pessoas")
                         .header("Authorization", "Bearer " + tokenAdmin)
@@ -169,11 +175,12 @@ class PessoaControllerTest {
 
     @Test
     void naoDeveCriarPessoaSemNome() throws Exception {
-        PessoaRequest req = new PessoaRequest();
-        req.setIdade(25);
-        req.setCep("01001000");
-        req.setTelefone("1199999999");
-        req.setScore(500);
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .idade(25)
+                .cep("01001000")
+                .telefone("1199999999")
+                .score(500)
+                .build();
 
         mockMvc.perform(post("/pessoas")
                         .header("Authorization", "Bearer " + tokenAdmin)
@@ -186,12 +193,13 @@ class PessoaControllerTest {
 
     @Test
     void naoDeveCriarPessoaComIdadeInvalida() throws Exception {
-        PessoaRequest req = new PessoaRequest();
-        req.setNome("Teste");
-        req.setIdade(200); // inválido
-        req.setCep("01001000");
-        req.setTelefone("1199999999");
-        req.setScore(500);
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Teste")
+                .idade(200) // inválido
+                .cep("01001000")
+                .telefone("1199999999")
+                .score(500)
+                .build();
 
         mockMvc.perform(post("/pessoas")
                         .header("Authorization", "Bearer " + tokenAdmin)
@@ -203,12 +211,13 @@ class PessoaControllerTest {
 
     @Test
     void naoDeveCriarPessoaComCepInvalido() throws Exception {
-        PessoaRequest req = new PessoaRequest();
-        req.setNome("Maria");
-        req.setIdade(30);
-        req.setCep("123"); // inválido
-        req.setTelefone("1199999999");
-        req.setScore(500);
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Maria")
+                .idade(30)
+                .cep("123") // inválido
+                .telefone("1199999999")
+                .score(500)
+                .build();
 
         mockMvc.perform(post("/pessoas")
                         .header("Authorization", "Bearer " + tokenAdmin)
@@ -220,11 +229,12 @@ class PessoaControllerTest {
 
     @Test
     void deveRetornarNotFoundAoAtualizarPessoaInexistente() throws Exception {
-        PessoaRequest req = new PessoaRequest();
-        req.setNome("Inexistente");
-        req.setIdade(30);
-        req.setCep("01001000");
-        req.setScore(400);
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Inexistente")
+                .idade(30)
+                .cep("01001000")
+                .score(400)
+                .build();
 
         mockMvc.perform(put("/pessoas/9999")
                         .header("Authorization", "Bearer " + tokenAdmin)
@@ -233,5 +243,4 @@ class PessoaControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Recurso não encontrado"));
     }
-
 }

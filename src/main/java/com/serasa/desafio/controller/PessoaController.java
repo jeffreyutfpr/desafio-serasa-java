@@ -1,7 +1,7 @@
 package com.serasa.desafio.controller;
 
-import com.serasa.desafio.dto.PessoaRequest;
-import com.serasa.desafio.dto.PessoaResponse;
+import com.serasa.desafio.dto.PessoaRequestDto;
+import com.serasa.desafio.dto.PessoaResponseDto;
 import com.serasa.desafio.service.PessoaService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,30 +22,30 @@ public class PessoaController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<PessoaResponse> criar(@Validated @RequestBody PessoaRequest request) {
-        return ResponseEntity.ok(service.criarPessoa(request));
+    public ResponseEntity<PessoaResponseDto> criar(@Validated @RequestBody PessoaRequestDto request) {
+        return ResponseEntity.ok(service.criar(request));
     }
 
     @GetMapping
-    public ResponseEntity<Page<PessoaResponse>> listar(
+    public ResponseEntity<Page<PessoaResponseDto>> listar(
             @RequestParam(required = false) String nome,
             @RequestParam(required = false) Integer idade,
             @RequestParam(required = false) String cep,
             Pageable pageable
     ) {
-        return ResponseEntity.ok(service.listarPessoas(nome, idade, cep, pageable));
+        return ResponseEntity.ok(service.listar(nome, idade, cep, pageable));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<PessoaResponse> atualizar(@PathVariable Long id, @RequestBody PessoaRequest request) {
-        return ResponseEntity.ok(service.atualizarPessoa(id, request));
+    public ResponseEntity<PessoaResponseDto> atualizar(@PathVariable Long id, @RequestBody PessoaRequestDto request) {
+        return ResponseEntity.ok(service.atualizar(id, request));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
-        service.excluirPessoa(id);
+        service.excluirLogicamente(id);
         return ResponseEntity.noContent().build();
     }
 }

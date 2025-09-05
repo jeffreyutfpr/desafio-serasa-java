@@ -1,12 +1,16 @@
 package com.serasa.desafio.dto;
 
 import jakarta.validation.constraints.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Setter
-@Getter
-public class PessoaRequest {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PessoaRequestDto {
 
     @NotBlank(message = "Nome é obrigatório")
     private String nome;
@@ -17,15 +21,13 @@ public class PessoaRequest {
     private Integer idade;
 
     @NotBlank(message = "CEP é obrigatório")
-    @Pattern(regexp = "^\\d{8}$", message = "CEP deve ter exatamente 8 dígitos")
+    @Pattern(regexp = "\\d{8}", message = "CEP deve ter exatamente 8 dígitos")
     private String cep;
 
-    @Pattern(regexp = "^\\d{10,11}$", message = "Telefone deve ter 10 ou 11 dígitos")
     private String telefone;
 
     @NotNull(message = "Score é obrigatório")
-    @Min(value = 0, message = "Score deve ser no mínimo 0")
-    @Max(value = 1000, message = "Score deve ser no máximo 1000")
+    @Min(value = 0, message = "Score deve ser maior ou igual a 0")
+    @Max(value = 1000, message = "Score deve ser menor ou igual a 1000")
     private Integer score;
-
 }

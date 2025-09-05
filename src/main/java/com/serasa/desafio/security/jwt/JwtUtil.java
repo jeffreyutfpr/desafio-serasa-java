@@ -1,4 +1,4 @@
-package com.serasa.desafio.security;
+package com.serasa.desafio.security.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -28,7 +28,7 @@ public class JwtUtil {
 
     public String generateToken(String username, String role) {
         return Jwts.builder()
-                .claim("role", role.replace("ROLE_", "")) // salva só ADMIN ou USER
+                .claim("role", role.replace("ROLE_", ""))
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
