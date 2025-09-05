@@ -22,19 +22,22 @@ public class PessoaController {
         this.service = service;
     }
 
-    @Operation(summary = "Cria uma nova pessoa", description = "Requer role ADMIN e validações do DTO")
+    @Operation(summary = "Cria uma nova pessoa", description = "Requer role ADMIN")
     @ApiResponse(responseCode = "200", description = "Pessoa criada com sucesso")
     @ApiResponse(responseCode = "400", description = "Erro de validação")
-    @ApiResponse(responseCode = "403", description = "Acesso negado (sem permissão ADMIN)")
+    @ApiResponse(responseCode = "401", description = "Não autenticado")
+    @ApiResponse(responseCode = "403", description = "Acesso negado")
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PessoaResponseDto> criar(@Valid @RequestBody PessoaRequestDto request) {
         return ResponseEntity.ok(service.criar(request));
     }
 
-    @Operation(summary = "Lista pessoas", description = "Pode filtrar por nome, idade e CEP. Retorna apenas pessoas ativas.")
+    @Operation(summary = "Lista pessoas", description = "Pode filtrar por nome, idade e CEP. Requer role USER ou ADMIN")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @ApiResponse(responseCode = "401", description = "Não autenticado")
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<Page<PessoaResponseDto>> listar(
             @RequestParam(required = false) String nome,
             @RequestParam(required = false) Integer idade,
@@ -44,17 +47,20 @@ public class PessoaController {
         return ResponseEntity.ok(service.listar(nome, idade, cep, pageable));
     }
 
-    @Operation(summary = "Busca pessoa por ID", description = "Retorna a pessoa correspondente ao ID informado.")
+    @Operation(summary = "Busca pessoa por ID", description = "Requer role USER ou ADMIN")
     @ApiResponse(responseCode = "200", description = "Pessoa encontrada")
+    @ApiResponse(responseCode = "401", description = "Não autenticado")
     @ApiResponse(responseCode = "404", description = "Pessoa não encontrada")
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<PessoaResponseDto> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(service.buscarPorId(id));
     }
 
-    @Operation(summary = "Atualiza uma pessoa existente", description = "Requer role ADMIN. Retorna 404 se a pessoa não existir.")
+    @Operation(summary = "Atualiza uma pessoa existente", description = "Requer role ADMIN")
     @ApiResponse(responseCode = "200", description = "Pessoa atualizada com sucesso")
     @ApiResponse(responseCode = "400", description = "Erro de validação")
+    @ApiResponse(responseCode = "401", description = "Não autenticado")
     @ApiResponse(responseCode = "403", description = "Acesso negado")
     @ApiResponse(responseCode = "404", description = "Pessoa não encontrada")
     @PutMapping("/{id}")
@@ -64,8 +70,9 @@ public class PessoaController {
         return ResponseEntity.ok(service.atualizar(id, request));
     }
 
-    @Operation(summary = "Exclui pessoa logicamente", description = "Requer role ADMIN. Marca a pessoa como inativa em vez de excluir do banco.")
+    @Operation(summary = "Exclui pessoa logicamente", description = "Requer role ADMIN. Marca a pessoa como inativa.")
     @ApiResponse(responseCode = "204", description = "Pessoa excluída logicamente")
+    @ApiResponse(responseCode = "401", description = "Não autenticado")
     @ApiResponse(responseCode = "403", description = "Acesso negado")
     @ApiResponse(responseCode = "404", description = "Pessoa não encontrada")
     @DeleteMapping("/{id}")
