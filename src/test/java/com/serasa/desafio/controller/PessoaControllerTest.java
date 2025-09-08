@@ -128,7 +128,7 @@ class PessoaControllerTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andReturn().getResponse().getContentAsString();
 
-        Long id = objectMapper.readTree(response).get("id").asLong();
+        long id = objectMapper.readTree(response).get("id").asLong();
 
         PessoaRequestDto updateReq = PessoaRequestDto.builder()
                 .nome("Ana Maria")
@@ -162,7 +162,7 @@ class PessoaControllerTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andReturn().getResponse().getContentAsString();
 
-        Long id = objectMapper.readTree(response).get("id").asLong();
+        long id = objectMapper.readTree(response).get("id").asLong();
 
         mockMvc.perform(delete("/pessoas/" + id)
                         .header("Authorization", "Bearer " + tokenAdmin))
@@ -262,7 +262,7 @@ class PessoaControllerTest {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
-        Long id = objectMapper.readTree(response).get("id").asLong();
+        long id = objectMapper.readTree(response).get("id").asLong();
 
         PessoaRequestDto updateReq = PessoaRequestDto.builder()
                 .nome("User Alterado")
@@ -294,7 +294,7 @@ class PessoaControllerTest {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
-        Long id = objectMapper.readTree(response).get("id").asLong();
+        long id = objectMapper.readTree(response).get("id").asLong();
 
         mockMvc.perform(delete("/pessoas/" + id)
                         .header("Authorization", "Bearer " + tokenUser))

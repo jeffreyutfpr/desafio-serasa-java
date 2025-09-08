@@ -22,6 +22,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    private static final String ADMIN = "ADMIN";
+    private static final String USER = "USER";
+
     private final JwtAuthenticationFilter jwtFilter;
 
     public SecurityConfig(JwtAuthenticationFilter jwtFilter) {
@@ -31,27 +34,32 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/pessoas/**").hasAnyRole("USER", "ADMIN")
-                    .requestMatchers("/pessoas/**").hasRole("ADMIN")
-                    .anyRequest().authenticated()
-            )
-            .exceptionHandling(ex -> ex
-                    .authenticationEntryPoint((request, response, authException) ->
-                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        HttpSecurity httpSecurity = http
+                .csrf(csrf -> csrf.disable())
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                        (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+                ))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/pessoas/**").hasAnyRole(USER, ADMIN)
+                        .requestMatchers("/pessoas/**").hasRole(ADMIN)
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-        var admin = User.withUsername("admin").password(encoder.encode("admin123")).roles("ADMIN").build();
-        var user = User.withUsername("user").password(encoder.encode("user123")).roles("USER").build();
+        var admin = User.withUsername("admin").password(encoder.encode("admin123")).roles(ADMIN).build();
+        var user = User.withUsername("user").password(encoder.encode("user123")).roles(USER).build();
         return new InMemoryUserDetailsManager(admin, user);
     }
 
