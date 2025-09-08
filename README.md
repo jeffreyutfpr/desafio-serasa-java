@@ -85,8 +85,8 @@ Abrir em navegador:
 `target/site/jacoco/index.html`
 
 ### Cobertura atual
-- **Linhas**: ~93%
-- **Branches**: ~68%
+- **Linhas**: ~96%
+- **Branches**: ~78%
 - **Classes**: 100%
 
 👉 Cobertura consolidada com testes de:

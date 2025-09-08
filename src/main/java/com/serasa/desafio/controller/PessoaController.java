@@ -4,13 +4,18 @@ import com.serasa.desafio.dto.PessoaRequestDto;
 import com.serasa.desafio.dto.PessoaResponseDto;
 import com.serasa.desafio.service.PessoaService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/pessoas")
@@ -23,14 +28,22 @@ public class PessoaController {
     }
 
     @Operation(summary = "Cria uma nova pessoa", description = "Requer role ADMIN")
-    @ApiResponse(responseCode = "200", description = "Pessoa criada com sucesso")
-    @ApiResponse(responseCode = "400", description = "Erro de validação")
-    @ApiResponse(responseCode = "401", description = "Não autenticado")
-    @ApiResponse(responseCode = "403", description = "Acesso negado")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Pessoa criada com sucesso",
+                    headers = { @Header(name = "Location", description = "URL do recurso criado") }),
+            @ApiResponse(responseCode = "400", description = "Erro de validação"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado")
+    })
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PessoaResponseDto> criar(@Valid @RequestBody PessoaRequestDto request) {
-        return ResponseEntity.ok(service.criar(request));
+        PessoaResponseDto resp = service.criar(request);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(resp.getId())
+                .toUri();
+        return ResponseEntity.created(location).body(resp);
     }
 
     @Operation(summary = "Lista pessoas", description = "Pode filtrar por nome, idade e CEP. Requer role USER ou ADMIN")

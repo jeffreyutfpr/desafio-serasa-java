@@ -2,6 +2,7 @@ package com.serasa.desafio.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.serasa.desafio.dto.PessoaRequestDto;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +70,7 @@ class PessoaControllerTest {
                         .header("Authorization", "Bearer " + tokenAdmin)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.nome").value("João da Silva"))
                 .andExpect(jsonPath("$.cidade").value("São Paulo"))
                 .andExpect(jsonPath("$.scoreDescricao").value("Recomendável"));
@@ -105,7 +106,7 @@ class PessoaControllerTest {
                         .header("Authorization", "Bearer " + tokenAdmin)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         mockMvc.perform(get("/pessoas")
                         .header("Authorization", "Bearer " + tokenUser)
@@ -260,7 +261,7 @@ class PessoaControllerTest {
                         .header("Authorization", "Bearer " + tokenAdmin)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
         long id = objectMapper.readTree(response).get("id").asLong();
@@ -292,7 +293,7 @@ class PessoaControllerTest {
                         .header("Authorization", "Bearer " + tokenAdmin)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
         long id = objectMapper.readTree(response).get("id").asLong();
@@ -338,7 +339,7 @@ class PessoaControllerTest {
                         .header("Authorization", "Bearer " + tokenAdmin)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         mockMvc.perform(get("/pessoas")
                         .header("Authorization", "Bearer " + tokenAdmin)
@@ -365,7 +366,7 @@ class PessoaControllerTest {
                         .header("Authorization", "Bearer " + tokenAdmin)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.nome").value("Usuario Sem Cep"))
                 .andExpect(jsonPath("$.score").value(400))
                 .andExpect(jsonPath("$.scoreDescricao").value("Inaceitável"))
@@ -385,7 +386,7 @@ class PessoaControllerTest {
                         .header("Authorization", "Bearer " + tokenAdmin)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.nome").value("Usuario Sem Score"))
                 .andExpect(jsonPath("$.score").value(0))
                 .andExpect(jsonPath("$.scoreDescricao").value("Insuficiente"));
@@ -405,7 +406,7 @@ class PessoaControllerTest {
                         .header("Authorization", "Bearer " + tokenAdmin)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.nome").value("Pessoa Com Cep Formatado"))
                 .andExpect(jsonPath("$.score").value(600))
                 .andExpect(jsonPath("$.scoreDescricao").value("Aceitável"))
@@ -432,7 +433,7 @@ class PessoaControllerTest {
                         .header("Authorization", "Bearer " + tokenAdmin)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         mockMvc.perform(get("/pessoas")
                         .header("Authorization", "Bearer " + tokenAdmin)
@@ -455,7 +456,7 @@ class PessoaControllerTest {
                         .header("Authorization", "Bearer " + tokenAdmin)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         mockMvc.perform(get("/pessoas")
                         .header("Authorization", "Bearer " + tokenAdmin)
