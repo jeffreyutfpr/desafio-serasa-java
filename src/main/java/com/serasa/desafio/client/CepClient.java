@@ -1,6 +1,5 @@
 package com.serasa.desafio.client;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -8,10 +7,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
-@Slf4j
 @Component
 public class CepClient {
 
@@ -32,10 +30,12 @@ public class CepClient {
                     },
                     cep
             );
-            return response.getBody() != null ? response.getBody() : Collections.emptyMap();
-        } catch (RestClientException e) {
-            log.warn("Falha ao consultar ViaCEP para CEP {}: {}", cep, e.getMessage());
-            return Collections.emptyMap();
+            return response.getBody() != null
+                    ? response.getBody()
+                    : new HashMap<>();
+        } catch (RestClientException ex) {
+            return new HashMap<>();
         }
     }
+
 }

@@ -8,6 +8,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 import java.util.function.Function;
@@ -26,14 +27,35 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(String username, String role) {
+    public String generateToken(String username, String roleWithOrWithoutPrefix) {
+        return generateToken(username, roleWithOrWithoutPrefix, expirationMillis);
+    }
+
+    public String generateToken(String username, String roleWithOrWithoutPrefix, long customExpirationMillis) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + customExpirationMillis);
+
+        String role = roleWithOrWithoutPrefix == null ? null : roleWithOrWithoutPrefix.replace("ROLE_", "");
+
         return Jwts.builder()
-                .claim("role", role.replace("ROLE_", ""))
                 .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
+                .claim("role", role)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public String extractUsername(String token) {
@@ -51,5 +73,19 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
         return claimsResolver.apply(claims);
+    }
+
+    public String generateToken(String username, long expirationMillis) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + expirationMillis);
+
+        SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
+
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
     }
 }

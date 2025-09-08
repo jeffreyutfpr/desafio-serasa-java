@@ -4,17 +4,16 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.NonNull;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -26,35 +25,48 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        final String header = request.getHeader("Authorization");
+        final String prefix = "Bearer ";
+
+        if (header == null || !header.startsWith(prefix)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(7);
-        String username;
+        final String token = header.substring(prefix.length());
+
         try {
-            username = jwtUtil.extractUsername(token);
-        } catch (Exception e) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+            if (!jwtUtil.validateToken(token)) {
+                SecurityContextHolder.clearContext();
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido ou expirado");
+                return;
+            }
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            String username = jwtUtil.extractUsername(token);
             String role = jwtUtil.extractRole(token);
-            UserDetails userDetails = User.withUsername(username)
-                    .password("")
-                    .roles(role)
-                    .build();
 
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities());
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                List<GrantedAuthority> authorities = Collections.emptyList();
+
+                if (role != null && !role.isBlank()) {
+                    authorities = List.of((GrantedAuthority) () -> "ROLE_" + role);
+                }
+
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(username, null, authorities);
+
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+
+        } catch (Exception e) {
+            SecurityContextHolder.clearContext();
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Erro ao processar token");
+            return;
         }
 
         filterChain.doFilter(request, response);

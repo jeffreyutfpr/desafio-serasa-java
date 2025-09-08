@@ -10,6 +10,7 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -34,11 +35,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
-        HttpSecurity httpSecurity = http
-                .csrf(csrf -> csrf.disable())
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(
-                        (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
-                ))
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(
+                                (request, response, authException) ->
+                                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+                        )
+                        .accessDeniedHandler(
+                                (request, response, accessDeniedException) ->
+                                        response.sendError(HttpServletResponse.SC_FORBIDDEN)
+                        )
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/v3/api-docs/**",
@@ -47,8 +55,10 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
                         .requestMatchers("/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/pessoas/**").hasAnyRole(USER, ADMIN)
-                        .requestMatchers("/pessoas/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.GET, "/pessoas/**").hasAnyRole(ADMIN, USER)
+                        .requestMatchers(HttpMethod.POST, "/pessoas").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.PUT, "/pessoas/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.DELETE, "/pessoas/**").hasRole(ADMIN)
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

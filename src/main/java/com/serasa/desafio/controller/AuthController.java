@@ -1,10 +1,9 @@
 package com.serasa.desafio.controller;
 
 import com.serasa.desafio.security.jwt.JwtUtil;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,32 +15,33 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
-        this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
-    }
-
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@Valid @RequestBody LoginRequest req) {
+    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest request) {
         Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword()));
-        String role = auth.getAuthorities().stream().map(GrantedAuthority::getAuthority).findFirst().orElse("ROLE_USER");
-        String token = jwtUtil.generateToken(req.getUsername(), role);
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        );
+
+        String roleWithPrefix = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElse("ROLE_USER");
+
+        String token = jwtUtil.generateToken(request.getUsername(), roleWithPrefix);
+
         return ResponseEntity.ok(Map.of("token", token));
     }
 
-    @Setter
-    @Getter
+    @Data
+    @AllArgsConstructor
     public static class LoginRequest {
-        @NotBlank
         private String username;
-        @NotBlank
         private String password;
-
+        public LoginRequest() {}
     }
 }

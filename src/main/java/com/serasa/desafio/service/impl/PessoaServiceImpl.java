@@ -3,73 +3,79 @@ package com.serasa.desafio.service.impl;
 import com.serasa.desafio.client.CepClient;
 import com.serasa.desafio.dto.PessoaRequestDto;
 import com.serasa.desafio.dto.PessoaResponseDto;
+import com.serasa.desafio.entity.Endereco;
 import com.serasa.desafio.entity.Pessoa;
+import com.serasa.desafio.entity.Score;
 import com.serasa.desafio.repository.PessoaRepository;
-import com.serasa.desafio.repository.PessoaSpecs;
 import com.serasa.desafio.service.PessoaService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.NoSuchElementException;
 
 @Service
+@RequiredArgsConstructor
 public class PessoaServiceImpl implements PessoaService {
-
-    private static final String PESSOA_NAO_ENCONTRADA = "Pessoa não encontrada";
 
     private final PessoaRepository repository;
     private final CepClient cepClient;
 
-    public PessoaServiceImpl(PessoaRepository repository, CepClient cepClient) {
-        this.repository = repository;
-        this.cepClient = cepClient;
+    private static final String PESSOA_NAO_ENCONTRADA = "Pessoa não encontrada";
+
+    @Override
+    public PessoaResponseDto criar(PessoaRequestDto dto) {
+        Pessoa pessoa = Pessoa.builder()
+                .nome(dto.getNome())
+                .idade(dto.getIdade())
+                .telefone(dto.getTelefone())
+                .ativo(true)
+                .build();
+
+        pessoa.setScore(
+                dto.getScore() != null
+                        ? Score.builder().valor(dto.getScore()).build()
+                        : Score.builder().valor(0).build()
+        );
+
+        pessoa.setEndereco(
+                dto.getCep() != null
+                        ? Endereco.builder().cep(normalizarCep(dto.getCep())).build()
+                        : new Endereco()
+        );
+
+        preencherEnderecoPorCep(pessoa);
+
+        return PessoaResponseDto.fromEntity(repository.save(pessoa));
     }
 
     @Override
-    @Transactional
-    public PessoaResponseDto criar(PessoaRequestDto req) {
-        Pessoa pessoa = toEntity(req);
-        preencherEnderecoPorCep(pessoa, req.getCep());
-        pessoa.setAtivo(true);
-        pessoa = repository.save(pessoa);
-        return toResponse(pessoa);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PessoaResponseDto> listar(String nome, Integer idade, String cep, Pageable pageable) {
-        Specification<Pessoa> spec = Specification.where(PessoaSpecs.ativoTrue())
-                .and(PessoaSpecs.nomeContains(nome))
-                .and(PessoaSpecs.idadeEquals(idade))
-                .and(PessoaSpecs.cepEquals(cep));
-        return repository.findAll(spec, pageable).map(this::toResponse);
-    }
-
-    @Override
-    @Transactional
-    public PessoaResponseDto atualizar(Long id, PessoaRequestDto req) {
+    public PessoaResponseDto atualizar(Long id, PessoaRequestDto dto) {
         Pessoa pessoa = repository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException(PESSOA_NAO_ENCONTRADA));
 
-        if (req.getNome() != null) pessoa.setNome(req.getNome());
-        if (req.getIdade() != null) pessoa.setIdade(req.getIdade());
-        if (req.getTelefone() != null) pessoa.setTelefone(req.getTelefone());
-        if (req.getScore() != null) pessoa.setScore(req.getScore());
-        if (req.getCep() != null && !req.getCep().equals(pessoa.getCep())) {
-            pessoa.setCep(req.getCep());
-            preencherEnderecoPorCep(pessoa, req.getCep());
-        }
+        pessoa.setNome(dto.getNome());
+        pessoa.setIdade(dto.getIdade());
+        pessoa.setTelefone(dto.getTelefone());
 
-        pessoa = repository.save(pessoa);
-        return toResponse(pessoa);
+        if (pessoa.getScore() == null) {
+            pessoa.setScore(Score.builder().valor(0).build());
+        }
+        pessoa.getScore().setValor(dto.getScore() != null ? dto.getScore() : 0);
+
+        if (pessoa.getEndereco() == null) {
+            pessoa.setEndereco(new Endereco());
+        }
+        pessoa.getEndereco().setCep(normalizarCep(dto.getCep()));
+
+        preencherEnderecoPorCep(pessoa);
+
+        return PessoaResponseDto.fromEntity(repository.save(pessoa));
     }
 
     @Override
-    @Transactional
     public void excluirLogicamente(Long id) {
         Pessoa pessoa = repository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException(PESSOA_NAO_ENCONTRADA));
@@ -78,56 +84,46 @@ public class PessoaServiceImpl implements PessoaService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    public Page<PessoaResponseDto> listar(String nome, Pageable pageable) {
+        Page<Pessoa> page = repository.findByNomeContainingIgnoreCaseAndAtivoTrue(
+                (nome == null ? "" : nome), pageable);
+        return page.map(PessoaResponseDto::fromEntity);
+    }
+
+    @Override
+    public Page<PessoaResponseDto> listar(String nome, Integer idade, String cep, Pageable pageable) {
+        Page<Pessoa> page = repository.buscarComFiltros(
+                (nome == null || nome.isBlank()) ? null : nome,
+                idade,
+                (cep == null || cep.isBlank()) ? null : normalizarCep(cep),
+                pageable
+        );
+        return page.map(PessoaResponseDto::fromEntity);
+    }
+
+    @Override
     public PessoaResponseDto buscarPorId(Long id) {
         Pessoa pessoa = repository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException(PESSOA_NAO_ENCONTRADA));
-        return toResponse(pessoa);
+        return PessoaResponseDto.fromEntity(pessoa);
     }
 
-    private Pessoa toEntity(PessoaRequestDto req) {
-        Pessoa p = new Pessoa();
-        p.setNome(req.getNome());
-        p.setIdade(req.getIdade());
-        p.setCep(req.getCep());
-        p.setTelefone(req.getTelefone());
-        p.setScore(req.getScore());
-        p.setAtivo(true);
-        return p;
+    private void preencherEnderecoPorCep(Pessoa pessoa) {
+        if (pessoa.getEndereco() == null || pessoa.getEndereco().getCep() == null) return;
+
+        Map<String, Object> m = cepClient.buscaEndereco(pessoa.getEndereco().getCep());
+        if (m == null || m.isEmpty()) return;
+
+        Endereco e = pessoa.getEndereco();
+        e.setCep(normalizarCep((String) m.get("cep")));
+        e.setEstado((String) m.get("uf"));
+        e.setCidade((String) m.get("localidade"));
+        e.setBairro((String) m.get("bairro"));
+        e.setLogradouro((String) m.get("logradouro"));
     }
 
-    private PessoaResponseDto toResponse(Pessoa p) {
-        return PessoaResponseDto.builder()
-                .id(p.getId())
-                .nome(p.getNome())
-                .idade(p.getIdade())
-                .cep(p.getCep())
-                .estado(p.getEstado())
-                .cidade(p.getCidade())
-                .bairro(p.getBairro())
-                .logradouro(p.getLogradouro())
-                .telefone(p.getTelefone())
-                .score(p.getScore())
-                .scoreDescricao(calcularScoreDescricao(p.getScore()))
-                .build();
-    }
-
-    private void preencherEnderecoPorCep(Pessoa p, String cep) {
-        Map<String, Object> endereco = cepClient.buscaEndereco(cep);
-
-        if (!endereco.isEmpty() && endereco.get("erro") == null) {
-            p.setEstado((String) endereco.getOrDefault("uf", null));
-            p.setCidade((String) endereco.getOrDefault("localidade", null));
-            p.setBairro((String) endereco.getOrDefault("bairro", null));
-            p.setLogradouro((String) endereco.getOrDefault("logradouro", null));
-        }
-    }
-
-    private String calcularScoreDescricao(Integer score) {
-        if (score == null) return null;
-        if (score <= 200) return "Baixo";
-        if (score <= 500) return "Inaceitável";
-        if (score <= 700) return "Aceitável";
-        return "Recomendável";
+    private String normalizarCep(String cep) {
+        if (cep == null) return null;
+        return cep.replaceAll("\\D", "");
     }
 }

@@ -7,5 +7,5 @@ server:
 
 app:
   jwt:
-    secret: "change-me-super-secret-key-please"
-    expirationMillis: 3600000 # 1 hour
+    secret: "b1e2c3d4f5g6h7i8j9k0l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e0f1g2"
+    expirationMillis: 3600000

@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -226,7 +227,7 @@ class PessoaControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details.cep").value("CEP deve ter exatamente 8 dígitos"));
+                .andExpect(jsonPath("$.details.cep").value("CEP deve ter 8 dígitos, com ou sem hífen"));
     }
 
     @Test
@@ -321,6 +322,155 @@ class PessoaControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void deveListarPessoasComEnderecoEScoreCarregados() throws Exception {
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("João com endereço")
+                .idade(28)
+                .cep("01001000")
+                .telefone("11977776666")
+                .score(750)
+                .build();
+
+        mockMvc.perform(post("/pessoas")
+                        .header("Authorization", "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/pessoas")
+                        .header("Authorization", "Bearer " + tokenAdmin)
+                        .param("nome", "João com endereço"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].nome").value("João com endereço"))
+
+                .andExpect(jsonPath("$.content[0].cidade").isNotEmpty())
+                .andExpect(jsonPath("$.content[0].estado").isNotEmpty())
+                .andExpect(jsonPath("$.content[0].score").value(750))
+                .andExpect(jsonPath("$.content[0].scoreDescricao").value("Recomendável"));
+    }
+
+    @Test
+    void deveCriarPessoaMesmoComCepNull() throws Exception {
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Usuario Sem Cep")
+                .idade(20)
+                .telefone("11911112222")
+                .score(400)
+                .build();
+
+        mockMvc.perform(post("/pessoas")
+                        .header("Authorization", "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Usuario Sem Cep"))
+                .andExpect(jsonPath("$.score").value(400))
+                .andExpect(jsonPath("$.scoreDescricao").value("Inaceitável"))
+                .andExpect(jsonPath("$.cep").doesNotExist());
+    }
+
+    @Test
+    void deveCriarPessoaMesmoComScoreNull() throws Exception {
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Usuario Sem Score")
+                .idade(22)
+                .cep("01001000")
+                .telefone("11933334444")
+                .build();
+
+        mockMvc.perform(post("/pessoas")
+                        .header("Authorization", "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Usuario Sem Score"))
+                .andExpect(jsonPath("$.score").value(0))
+                .andExpect(jsonPath("$.scoreDescricao").value("Insuficiente"));
+    }
+
+    @Test
+    void deveNormalizarCepQuandoEnviadoComHifen() throws Exception {
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Pessoa Com Cep Formatado")
+                .idade(25)
+                .cep("01001-001")
+                .telefone("11944445555")
+                .score(600)
+                .build();
+
+        String response = mockMvc.perform(post("/pessoas")
+                        .header("Authorization", "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Pessoa Com Cep Formatado"))
+                .andExpect(jsonPath("$.score").value(600))
+                .andExpect(jsonPath("$.scoreDescricao").value("Aceitável"))
+                .andExpect(jsonPath("$.cep").value("01001001"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String cep = objectMapper.readTree(response).get("cep").asText();
+        assertEquals("01001001", cep);
+    }
+
+    @Test
+    void deveFiltrarPorIdade() throws Exception {
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Pessoa Idade 35")
+                .idade(35)
+                .cep("01001000")
+                .telefone("11922223333")
+                .score(400)
+                .build();
+
+        mockMvc.perform(post("/pessoas")
+                        .header("Authorization", "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/pessoas")
+                        .header("Authorization", "Bearer " + tokenAdmin)
+                        .param("idade", "35"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].idade").value(35));
+    }
+
+    @Test
+    void deveFiltrarPorCep() throws Exception {
+        PessoaRequestDto req = PessoaRequestDto.builder()
+                .nome("Pessoa Cep 01001000")
+                .idade(28)
+                .cep("01001000")
+                .telefone("11955556666")
+                .score(700)
+                .build();
+
+        mockMvc.perform(post("/pessoas")
+                        .header("Authorization", "Bearer " + tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/pessoas")
+                        .header("Authorization", "Bearer " + tokenAdmin)
+                        .param("cep", "01001000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].cep").value("01001000"));
+
+    }
+
+    @Test
+    void deveRetornarNotFoundAoExcluirPessoaInexistente() throws Exception {
+        mockMvc.perform(delete("/pessoas/9999")
+                        .header("Authorization", "Bearer " + tokenAdmin))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Recurso não encontrado"));
     }
 
 }

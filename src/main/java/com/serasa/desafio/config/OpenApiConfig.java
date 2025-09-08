@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
         info = @Info(
                 title = "Desafio Serasa API",
                 version = "1.0",
-                description = "API para gestão de Pessoas, com autenticação via JWT e integração com ViaCEP"
+                description = "API para gestão de Pessoas, com autenticação via JWT e integração com ViaCEP."
         ),
         security = @SecurityRequirement(name = "bearerAuth")
 )

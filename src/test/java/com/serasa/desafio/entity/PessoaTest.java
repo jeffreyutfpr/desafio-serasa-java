@@ -7,88 +7,83 @@ import static org.junit.jupiter.api.Assertions.*;
 class PessoaTest {
 
     @Test
-    void deveTestarGettersESetters() {
-        Pessoa pessoa = new Pessoa();
-        pessoa.setId(99L);
-        pessoa.setNome("Teste");
-        pessoa.setIdade(45);
-        pessoa.setCep("12345678");
-        pessoa.setEstado("SP");
-        pessoa.setCidade("São Paulo");
-        pessoa.setBairro("Centro");
-        pessoa.setLogradouro("Rua A");
-        pessoa.setTelefone("11987654321");
-        pessoa.setScore(750);
-        pessoa.setAtivo(false);
+    void deveTestarGettersESettersComModelagemNova() {
+
+        Endereco endereco = Endereco.builder()
+                .cep("12345678")
+                .estado("SP")
+                .cidade("São Paulo")
+                .bairro("Centro")
+                .logradouro("Rua A, 123")
+                .build();
+
+        Score score = Score.builder()
+                .valor(150)
+                .build();
+
+        Pessoa pessoa = Pessoa.builder()
+                .id(99L)
+                .nome("Teste")
+                .idade(45)
+                .telefone("11999999999")
+                .ativo(true)
+                .endereco(endereco)
+                .score(score)
+                .build();
 
         assertEquals(99L, pessoa.getId());
         assertEquals("Teste", pessoa.getNome());
         assertEquals(45, pessoa.getIdade());
-        assertEquals("12345678", pessoa.getCep());
-        assertEquals("SP", pessoa.getEstado());
-        assertEquals("São Paulo", pessoa.getCidade());
-        assertEquals("Centro", pessoa.getBairro());
-        assertEquals("Rua A", pessoa.getLogradouro());
-        assertEquals("11987654321", pessoa.getTelefone());
-        assertEquals(750, pessoa.getScore());
-        assertFalse(pessoa.isAtivo());
-    }
-
-    @Test
-    void deveUsarEqualsAndHashCode() {
-        Pessoa p1 = new Pessoa(
-                1L, "Maria", 30, "01001000", "SP", "São Paulo",
-                "Centro", "Rua B", "11911111111", 600, true
-        );
-        Pessoa p2 = new Pessoa(
-                1L, "Maria", 30, "01001000", "SP", "São Paulo",
-                "Centro", "Rua B", "11911111111", 600, true
-        );
-
-        assertEquals(p1, p2);
-        assertEquals(p1.hashCode(), p2.hashCode());
-
-        p2.setId(2L);
-        assertNotEquals(p1, p2);
-    }
-
-    @Test
-    void deveCriarPessoaComAllArgsConstructor() {
-        Pessoa pessoa = new Pessoa(
-                10L, "João", 30, "01001000", "SP", "São Paulo",
-                "Sé", "Praça da Sé", "11999999999", 900, true
-        );
-
-        assertEquals(10L, pessoa.getId());
-        assertEquals("João", pessoa.getNome());
-        assertEquals(30, pessoa.getIdade());
-        assertEquals("01001000", pessoa.getCep());
-        assertEquals("SP", pessoa.getEstado());
-        assertEquals("São Paulo", pessoa.getCidade());
-        assertEquals("Sé", pessoa.getBairro());
-        assertEquals("Praça da Sé", pessoa.getLogradouro());
         assertEquals("11999999999", pessoa.getTelefone());
-        assertEquals(900, pessoa.getScore());
         assertTrue(pessoa.isAtivo());
+
+        assertNotNull(pessoa.getEndereco());
+        assertEquals("12345678", pessoa.getEndereco().getCep());
+        assertEquals("SP", pessoa.getEndereco().getEstado());
+        assertEquals("São Paulo", pessoa.getEndereco().getCidade());
+        assertEquals("Centro", pessoa.getEndereco().getBairro());
+        assertEquals("Rua A, 123", pessoa.getEndereco().getLogradouro());
+
+        assertNotNull(pessoa.getScore());
+        assertEquals(150, pessoa.getScore().getValor());
+        assertEquals("Insuficiente", pessoa.getScore().getDescricao());
+
+        pessoa.getScore().setValor(400);
+        assertEquals("Inaceitável", pessoa.getScore().getDescricao());
+
+        pessoa.getScore().setValor(650);
+        assertEquals("Aceitável", pessoa.getScore().getDescricao());
+
+        pessoa.getScore().setValor(800);
+        assertEquals("Recomendável", pessoa.getScore().getDescricao());
     }
 
     @Test
-    void deveRetornarScoreDescricaoCorretamente() {
-        Pessoa pessoa = new Pessoa();
+    void devePermitirAtualizarEnderecoEscore() {
+        Pessoa pessoa = Pessoa.builder()
+                .nome("Maria")
+                .idade(30)
+                .telefone("11988887777")
+                .ativo(true)
+                .build();
 
-        pessoa.setScore(null);
-        assertNull(pessoa.getScoreDescricao());
+        pessoa.setEndereco(Endereco.builder().cep("01001000").build());
+        assertEquals("01001000", pessoa.getEndereco().getCep());
 
-        pessoa.setScore(150);
-        assertEquals("Insuficiente", pessoa.getScoreDescricao());
+        pessoa.getEndereco().setCidade("São Paulo");
+        pessoa.getEndereco().setEstado("SP");
+        pessoa.getEndereco().setBairro("Sé");
+        pessoa.getEndereco().setLogradouro("Praça da Sé, 1");
+        assertEquals("São Paulo", pessoa.getEndereco().getCidade());
+        assertEquals("SP", pessoa.getEndereco().getEstado());
+        assertEquals("Sé", pessoa.getEndereco().getBairro());
+        assertEquals("Praça da Sé, 1", pessoa.getEndereco().getLogradouro());
 
-        pessoa.setScore(400);
-        assertEquals("Inaceitável", pessoa.getScoreDescricao());
+        pessoa.setScore(Score.builder().valor(500).build());
+        assertEquals(500, pessoa.getScore().getValor());
+        assertEquals("Inaceitável", pessoa.getScore().getDescricao());
 
-        pessoa.setScore(650);
-        assertEquals("Aceitável", pessoa.getScoreDescricao());
-
-        pessoa.setScore(800);
-        assertEquals("Recomendável", pessoa.getScoreDescricao());
+        pessoa.getScore().setValor(710);
+        assertEquals("Recomendável", pessoa.getScore().getDescricao());
     }
 }
