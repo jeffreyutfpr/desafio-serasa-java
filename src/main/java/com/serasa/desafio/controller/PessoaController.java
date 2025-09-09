@@ -29,8 +29,7 @@ public class PessoaController {
 
     @Operation(summary = "Cria uma nova pessoa", description = "Requer role ADMIN")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Pessoa criada com sucesso",
-                    headers = { @Header(name = "Location", description = "URL do recurso criado") }),
+            @ApiResponse(responseCode = "201", description = "Pessoa criada com sucesso"),
             @ApiResponse(responseCode = "400", description = "Erro de validação"),
             @ApiResponse(responseCode = "401", description = "Não autenticado"),
             @ApiResponse(responseCode = "403", description = "Acesso negado")

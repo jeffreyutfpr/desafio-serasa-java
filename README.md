@@ -15,7 +15,7 @@ Projeto desenvolvido em **Spring Boot 3**, com autenticação **JWT**, documenta
 - Exclusão **lógica** (flag `ativo`).
 - Tratamento global de erros (400, 401, 403, 404, 500).
 - Documentação com Swagger (UI em `/swagger-ui/index.html`).
-- Testes unitários e de integração com cobertura >90%.
+- Testes unitários e de integração com cobertura >96%.
 
 ---
 
@@ -97,6 +97,7 @@ Abrir em navegador:
 - Exceptions (`GlobalExceptionHandlerTest`)
 - Entidade (`PessoaTest`)
 - Contexto (`DesafioApplicationTest`)
+- Repository (`PessoaRepositoryTest`)
 
 ---
 
@@ -123,7 +124,7 @@ Para testes de desempenho:
 
 ## 📌 Conclusão
 
-O projeto foi refatorado em 8 etapas, cobrindo desde organização de pacotes até testes de qualidade.  
+O projeto foi realizado em diversas etapas, cobrindo desde organização de pacotes até testes de qualidade.  
 Atualmente apresenta **arquitetura limpa, segurança, documentação integrada, testes completos e cobertura acima do mercado**.
 
 A aplicação está pronta para ser expandida com novas funcionalidades conforme necessário.
